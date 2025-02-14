@@ -18,12 +18,12 @@ def main():
     device.set_current()
     s = device.create_stream()
 
-    module = module_cubin("kernel.cubin")
+    module = module_cubin("triton_kernel.cubin")
 
-    kernel = module.get_kernel("saxpy")
+    kernel = module.get_kernel("saxpy_kernel")
 
     # prepare input/output
-    N = np.uint64(1024)
+    N = np.uint32(1024)
 
     a = np.float32(2.0)
     x = torch.randn(N, dtype=torch.float32, device="cuda")
@@ -31,7 +31,7 @@ def main():
     out = torch.empty_like(x, dtype=torch.float32, device="cuda")
 
     # prepare launch
-    block = 32
+    block = 128
     grid = int((N + block - 1) // block)
     config = LaunchConfig(grid=grid, block=block, stream=s)
     ker_args = (a, x.data_ptr(), y.data_ptr(), out.data_ptr(), N)
