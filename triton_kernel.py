@@ -44,11 +44,11 @@ def main():
     ptx = kernel.asm["ptx"]
     cubin = kernel.asm["cubin"]
     
-    # Save the CUBIN to a file
+    # Save the CUBIN file
     with open("triton_kernel.cubin", "wb") as f:
         f.write(cubin)
         
-    # Print the first few lines of PTX for verification
+    # Save the PTX file
     with open("triton_kernel.ptx", "w") as f:
         f.write(ptx)
 
