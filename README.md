@@ -8,8 +8,16 @@ In julia, we use CUDA.jl instead.
 
 ## compile the cubin file
 
+use nvcc to compile the cubin file:
+
 ```
-nvcc -arch=sm_90a -o kernel.cubin saxpy.cu
+nvcc -arch=sm_90a -cubin -o kernel.cubin saxpy.cu
+```
+
+or use triton to dump the tuned cubin file:
+
+```
+python triton_kernel.py
 ```
 
 ## prepare the launch parameters
