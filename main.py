@@ -4,6 +4,8 @@
 
 import numpy as np
 import torch
+import json
+import os
 
 from cuda.core.experimental import Device, LaunchConfig, launch
 from cuda.core.experimental._module import ObjectCode
@@ -31,7 +33,7 @@ def main():
     out = torch.empty_like(x, dtype=torch.float32, device="cuda")
 
     # prepare launch
-    block = 128
+    block = json.load(open("kernel_config.json"))["num_warps"]*32 if os.path.exists("kernel_config.json") else 256
     grid = int((N + block - 1) // block)
     config = LaunchConfig(grid=grid, block=block, stream=s)
     ker_args = (a, x.data_ptr(), y.data_ptr(), out.data_ptr(), N)

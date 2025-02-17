@@ -1,7 +1,16 @@
 import triton
 import triton.language as tl
 import torch
+import json
 
+
+@triton.autotune(
+    configs=[
+        triton.Config({"BLOCK_SIZE": 128}, num_warps=4),
+        triton.Config({"BLOCK_SIZE": 256}, num_warps=8),
+    ],
+    key=["n"],
+)
 @triton.jit
 def saxpy_kernel(
     a,
@@ -9,7 +18,7 @@ def saxpy_kernel(
     y_ptr,
     out_ptr,
     n,
-    BLOCK_SIZE: tl.constexpr = 128,
+    BLOCK_SIZE: tl.constexpr,
 ):
     # Get program ID
     pid = tl.program_id(axis=0)
@@ -27,7 +36,7 @@ def saxpy_kernel(
 
 def saxpy(a, x, y, out, n):
     # Launch kernel with appropriate grid
-    grid = (triton.cdiv(n, 128),)
+    grid = lambda meta: (triton.cdiv(n, meta['BLOCK_SIZE']),)
     kernel = saxpy_kernel[grid](a, x, y, out, n)
     return kernel
 
@@ -52,6 +61,10 @@ def main():
     with open("triton_kernel.ptx", "w") as f:
         f.write(ptx)
 
+    print(saxpy_kernel.best_config)    
+    json.dump(saxpy_kernel.best_config.all_kwargs(), open("kernel_config.json", "w"))
+
+    
     torch.testing.assert_close(out, a * x + y)
     print("done!")
 
