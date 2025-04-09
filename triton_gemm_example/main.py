@@ -9,11 +9,11 @@ import os
 
 from cuda.core.experimental import Device, LaunchConfig, launch
 from cuda.core.experimental._module import ObjectCode
-from cuda.core.experimental._utils import driver, handle_return
+from cuda.core.experimental._utils.cuda_utils import driver, handle_return
 
 def module_cubin(cubin_path):
     data = open(cubin_path, "rb").read()
-    return ObjectCode(data, "cubin")
+    return ObjectCode.from_cubin(data)
 
 
 def matmul(a, b):
@@ -45,7 +45,8 @@ def matmul(a, b):
     smem_sz = kernel_config["shmem_size"]
 
     # Triton kernel would use too much shmem, need to raise the shmem limit use driver API.
-    config = LaunchConfig(grid=grid, block=block, stream=s, shmem_size=smem_sz)
+    config = LaunchConfig(grid=grid, block=block, shmem_size=smem_sz)
+
     handle_return(driver.cuKernelSetAttribute(driver.CUfunction_attribute.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES, smem_sz, int(kernel._handle), device._id ))
     cures = handle_return(driver.cuKernelGetAttribute(driver.CUfunction_attribute.CU_FUNC_ATTRIBUTE_MAX_DYNAMIC_SHARED_SIZE_BYTES, int(kernel._handle), device._id))
     print(f"[INFO] Shmem limit set to {cures/1024} KB")
@@ -57,7 +58,7 @@ def matmul(a, b):
     # print(f"{M=}, {N=}, {K=}, {a.stride(0)=}, {a.stride(1)=}, {b.stride(0)=}, {b.stride(1)=}, {c.stride(0)=}, {c.stride(1)=}")
 
     # launch kernel on stream s
-    launch(kernel, config, *ker_args)
+    launch(s, config, kernel, *ker_args)
     s.sync()
 
     # clean up 

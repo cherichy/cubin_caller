@@ -57,11 +57,11 @@ for dtype, torch_dtype, kernel in zip(dtypes, torch_dtypes, kernels):
     # prepare launch
     block = 128
     grid = int((size + block - 1) // block)
-    config = LaunchConfig(grid=grid, block=block, stream=s)
+    config = LaunchConfig(grid=grid, block=block)
     ker_args = (a, x.data_ptr(), y.data_ptr(), out.data_ptr(), size)
 
     # launch kernel on stream s
-    launch(ker, config, *ker_args)
+    launch(s, config, ker, *ker_args)
     s.sync()
 
     # check result
