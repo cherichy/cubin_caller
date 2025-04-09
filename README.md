@@ -26,3 +26,6 @@ In python, we use numpy to present float32, float64, uint64, int64, etc.
 
 In julia, we need to specify the type when launch the kernel.
 
+For triton kernel, we need to note that:
+1. the number of parameters may differ between generated cubin and triton kernel. 
+2. Triton would use too many shared memory, we may need to adjust the shared memory limitation via driver api.
